@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <title>DOTZ · Play on Base</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <!-- Base / Farcaster Mini App -->
+  <meta name="fc:miniapp" content='{"version":"next","imageUrl":"https://YOUR_REPLIT_URL/og.png","button":{"title":"Play DOTZ","action":{"type":"launch_miniapp","name":"DOTZ","url":"https://YOUR_REPLIT_URL","splashImageUrl":"https://YOUR_REPLIT_URL/icon.png","splashBackgroundColor":"#0a0a0a"}}}' />
+  <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk/dist/index.min.js"></script>
+  <meta name="base:app_id" content="69b850ff4a355834fdd07ff7" />
+</head>
+<body>
+
+<!-- ── LOADING ── -->
+<div id="loading">
+  <div class="logo">DOTZ</div>
+  <div class="sub">ON-CHAIN · BASE · PVP</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- ── TOP BAR ── -->
+<div id="topbar">
+  <div class="tb-logo">DOTZ</div>
+  <div class="tb-right">
+    <div class="chain-tag" id="chain-tag-display">BASE</div>
+    <button id="wb-btn" onclick="openWalletModal()">CONNECT</button>
+  </div>
+</div>
+
+<!-- ── TESTNET WARNING ── -->
+<div id="testnet-warning" style="display:none;position:fixed;top:46px;left:0;right:0;background:rgba(255,200,0,.1);border-bottom:1px solid rgba(255,200,0,.2);padding:8px;text-align:center;font-size:.6rem;color:var(--gold);z-index:99;letter-spacing:.05em">
+  ⚠️ TESTNET MODE — Using test ETH only
+</div>
+
+<!-- ── WALLET MODAL ── -->
+<div class="overlay" id="wallet-modal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeWalletModal()">✕</button>
+    <div class="modal-title" id="wm-title">CONNECT</div>
+    <div class="modal-sub" id="wm-sub">Connect Connect to stake &amp; win ETH</div>
+
+    <div id="wm-disconnected">
+      <div class="mm-prompt">
+        <div class="mm-fox">🦊</div>
+        <div class="mm-prompt-txt">Connect your wallet on <strong id="network-name-prompt">Base</strong> to stake ETH and play ranked matches.</div>
+      </div>
+      <div class="info-row"><div class="ir-lbl">STAKE PER MATCH</div><div class="ir-val">0.0002 ETH → Winner takes 0.0004 ETH</div></div>
+      <div class="info-row"><div class="ir-lbl">NETWORK</div><div class="ir-val" id="wm-network">⬟ Base Mainnet</div></div>
+      <div class="info-row"><div class="ir-lbl">FEE</div><div class="ir-val">5% to treasury · 95% to winner</div></div>
+      <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="connectWallet()">🛡️ Secure Connect</button>
+    </div>
+
+    <div id="wm-connected" style="display:none">
+      <div class="info-row" style="cursor:pointer;position:relative" onclick="copyWalletAddr()" title="Click to copy">
+        <div class="ir-lbl">WALLET</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="ir-val" id="wm-addr-full">—</div>
+          <span id="wm-copy-icon" style="font-size:0.75rem;opacity:0.5;transition:opacity .2s">⧉</span>
+          <span id="wm-copy-ok" style="font-size:0.65rem;color:var(--green);opacity:0;transition:opacity .3s">COPIED!</span>
+        </div>
+      </div>
+      <div class="info-row"><div class="ir-lbl">NETWORK</div><div class="ir-val" id="wm-network-label">Base Mainnet</div></div>
+      <div class="info-row"><div class="ir-lbl">BALANCE</div><div class="ir-val" id="wm-bal">…</div></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-ghost btn-full" onclick="closeWalletModal()">CLOSE ✓</button>
+        <button class="btn btn-full" onclick="disconnectWallet();closeWalletModal();" style="background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.3);color:var(--pink);font-size:.65rem">DISCONNECT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── HOME ── -->
+<div class="screen active" id="home-screen">
+  <div class="home-hero">
+    <div class="hero-title"><span class="t-green">DO</span><span class="t-pink">TZ</span></div>
+    <div class="hero-sub">CONNECT · STAKE · WIN · ON-CHAIN</div>
+    <div class="hero-dots">
+      <div class="hd g"></div><div class="hd g"></div><div class="hd b"></div>
+      <div class="hd b"></div><div class="hd p"></div><div class="hd p"></div>
+      <div class="hd b"></div><div class="hd g"></div><div class="hd b"></div>
+    </div>
+  </div>
+  <button class="btn btn-stake" onclick="handleStake()">⚔ STAKED PVP — 0.0002 ETH</button>
+  <button class="btn btn-invite" onclick="handleInvite()">🔗 INVITE FRIEND — 0.0002 ETH</button>
+  <button class="btn btn-invite" onclick="showScreen('invite-join-screen')" style="opacity:.7;margin-top:-4px;font-size:.7rem">🎯 JOIN BY CODE</button>
+  <button class="btn btn-free"  onclick="handleFree()">🎮 FREE PVP — NO WALLET</button>
+  <button class="btn btn-bot"   onclick="startBot()">🤖 PRACTICE VS BOT</button>
+  <!-- Stuck ETH refund — always visible when wallet connected -->
+  <div id="wallet-actions-area" style="display:none; margin:12px 0; width:100%; text-align:center">
+
+    <div id="withdraw-section" style="display:none; margin-bottom: 12px;">
+      <div style="font-size:.6rem; color:var(--gold); margin-bottom:4px; letter-spacing: 0.1em; font-weight: 700;">
+        CLAIMABLE: <span id="claimable-bal">0.0000</span> ETH
+      </div>
+      <button class="btn btn-sm" onclick="handleWithdraw()" style="
+        background: var(--gold); 
+        color: #000; 
+        border: none; 
+        font-weight: 900; 
+        padding: 8px 20px;
+        box-shadow: 0 0 15px rgba(255, 200, 0, 0.2);
+      ">💰 WITHDRAW ETH</button>
+    </div>
+
+    <div id="stuck-eth-banner">
+      <span style="font-size:.55rem; color:var(--muted)">Match stuck?</span>
+      <button onclick="recoverStuckEth()" style="
+        background:none; border:none; color:var(--muted); font-size:.55rem;
+        font-weight:700; cursor:pointer; text-decoration:underline; padding:0 4px;
+      ">GET REFUND</button>
+    </div>
+  </div>
+
+  <div class="home-stats">
+    <div class="hs"><div class="hs-v" id="s-games">—</div><div class="hs-l">GAMES</div></div>
+    <div class="hs"><div class="hs-v" id="s-online">—</div><div class="hs-l">ONLINE</div></div>
+  </div>
+  <div class="base-badge">
+    <svg viewBox="0 0 111 111" fill="none"><path d="M54.921 110.034C85.359 110.034 110.034 85.402 110.034 55.017C110.034 24.6319 85.359 0 54.921 0C25.8088 0 2.01567 22.5694 0 51.2031H72.8467V58.8306H0C2.01567 87.4643 25.8088 110.034 54.921 110.034Z" fill="#4488ff"/></svg>
+    <span>POWERED BY BASE</span>
+  </div>
+</div>
+
+<!-- ── INVITE HOST SCREEN ── -->
+<div class="screen" id="invite-host-screen">
+  <div class="mm-card">
+    <div class="mm-card-title" style="color:var(--gold)">INVITE FRIEND</div>
+    <div class="mm-card-sub">Share this code with your friend</div>
+    <div style="margin:20px 0;text-align:center">
+      <div id="invite-code-display" style="
+        font-family:var(--font-display);
+        font-size:2.5rem;
+        color:var(--gold);
+        letter-spacing:.2em;
+        background:rgba(255,200,0,0.08);
+        border:1px solid rgba(255,200,0,0.3);
+        border-radius:12px;
+        padding:16px 24px;
+        cursor:pointer;
+      " onclick="copyInviteCode()" title="Click to copy">——</div>
+      <div style="font-size:.55rem;color:var(--muted);margin-top:8px">Click code to copy</div>
+    </div>
+    <div id="invite-host-status">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center">
+        <div class="spinner"></div>
+        <div class="mm-txt">Waiting for friend to join...</div>
+      </div>
+    </div>
+    <button class="btn btn-danger btn-sm" style="margin:12px auto 0" onclick="cancelInvite()">CANCEL</button>
+  </div>
+</div>
+
+<!-- ── INVITE JOIN SCREEN ── -->
+<div class="screen" id="invite-join-screen">
+  <div class="mm-card">
+    <div class="mm-card-title" style="color:var(--gold)">ENTER CODE</div>
+    <div class="mm-card-sub">Enter the code your friend shared</div>
+    <div style="margin:20px 0;text-align:center">
+      <input id="invite-code-input" type="text" maxlength="6"
+        placeholder="ABC123"
+        style="
+          font-family:var(--font-display);
+          font-size:2rem;
+          color:var(--gold);
+          background:rgba(255,200,0,0.08);
+          border:1px solid rgba(255,200,0,0.3);
+          border-radius:12px;
+          padding:14px 20px;
+          text-align:center;
+          letter-spacing:.2em;
+          width:100%;
+          outline:none;
+          text-transform:uppercase;
+        "
+        oninput="this.value=this.value.toUpperCase()"
+      />
+    </div>
+    <button class="btn btn-stake btn-full" onclick="joinByCode()">JOIN MATCH</button>
+    <div id="invite-join-status" style="margin-top:10px;min-height:40px"></div>
+    <button class="btn btn-ghost btn-sm" style="margin:8px auto 0" onclick="showScreen('home-screen')">BACK</button>
+  </div>
+</div>
+
+<!-- ── STAKED MATCHMAKING ── -->
+<div class="screen" id="mm-screen">
+  <div class="mm-card">
+    <div class="mm-card-title" style="color:var(--green)">STAKED PVP</div>
+    <div class="mm-card-sub">STAKE · PLAY · WIN</div>
+    <div class="stake-display">
+      <div class="sd-label">YOUR STAKE</div>
+      <div class="sd-amount" style="color:var(--gold)">0.0002 ETH</div>
+      <div class="sd-sub">Prize pot: <strong style="color:var(--gold)">0.0004 ETH</strong> · Winner takes all</div>
+    </div>
+    <div class="players-vs">
+      <div><div class="pav p1" id="mm-p1">YOU</div><div class="pav-name">YOU</div></div>
+      <div class="vs-txt">VS</div>
+      <div><div class="pav wait" id="mm-p2">?</div><div class="pav-name" id="mm-opp">FINDING</div></div>
+    </div>
+    <div id="mm-status"><div class="spinner"></div><div class="mm-txt">SEARCHING…</div></div>
+    <!-- Staked PvP: 4x4 only -->
+    <button class="btn btn-danger btn-sm" style="margin:0 auto" onclick="cancelMM()">CANCEL</button>
+  </div>
+</div>
+
+<!-- ── FREE MATCHMAKING ── -->
+<div class="screen" id="free-mm-screen">
+  <div class="mm-card">
+    <div style="margin-bottom:8px"><span class="free-badge">🎮 FREE MODE · NO WALLET</span></div>
+    <div class="mm-card-title" style="color:var(--blue)">FREE PVP</div>
+    <div class="mm-card-sub">JUST FOR FUN · NO STAKES</div>
+    <div class="stake-display" style="border-color:rgba(0,136,255,.15)">
+      <div class="sd-label">ENTRY COST</div>
+      <div class="sd-amount" style="color:var(--blue);font-size:1.5rem">FREE 🎉</div>
+      <div class="sd-sub">No wallet needed · Play &amp; have fun</div>
+    </div>
+    <div class="players-vs">
+      <div><div class="pav p1" id="fmm-p1">YOU</div><div class="pav-name">YOU</div></div>
+      <div class="vs-txt">VS</div>
+      <div><div class="pav wait" id="fmm-p2">?</div><div class="pav-name" id="fmm-opp">FINDING</div></div>
+    </div>
+    <div id="fmm-status"><div class="spinner blue"></div><div class="mm-txt">SEARCHING…</div></div>
+    <div class="sz-row">
+      <div class="sz-opt sel" data-fn="4" onclick="pickFreeSize(4)">4×4<br><span style="font-size:.48rem">QUICK</span></div>
+      <div class="sz-opt"    data-fn="5" onclick="pickFreeSize(5)">5×5<br><span style="font-size:.48rem">CLASSIC</span></div>
+      <div class="sz-opt"    data-fn="6" onclick="pickFreeSize(6)">6×6<br><span style="font-size:.48rem">PRO</span></div>
+    </div>
+    <button class="btn btn-danger btn-sm" style="margin:0 auto" onclick="cancelFreeMM()">CANCEL</button>
+  </div>
+</div>
+
+<!-- ── GAME ── -->
+<div class="screen" id="game-screen">
+  <div class="game-top">
+    <div class="scores">
+      <div class="sc mine active" id="sc-me"><div class="sc-nm" id="sc-me-nm">YOU</div><div class="sc-v" id="sc-me-v">0</div></div>
+      <div class="sc theirs"      id="sc-op"><div class="sc-nm" id="sc-op-nm">OPP</div><div class="sc-v" id="sc-op-v">0</div></div>
+    </div>
+    <div class="turn-info"><span class="t-pip" id="t-pip" style="background:var(--green)"></span><span id="t-lbl">YOUR TURN</span></div>
+    <div class="pot-tag" id="pot-tag" style="display:none">🏆 0.0004E</div>
+  </div>
+  <div class="canvas-wrap"><canvas id="C"></canvas></div>
+  <div class="game-bot">
+    <button class="btn btn-ghost btn-sm" onclick="quitGame()">QUIT</button>
+    <button class="btn btn-ghost btn-sm" id="undo-btn" onclick="doUndo()" style="display:none">↩ UNDO</button>
+  </div>
+</div>
+
+<!-- ── RESULT ── -->
+<div class="screen" id="result-screen">
+  <div class="result-card" id="r-card">
+    <div class="r-icon"  id="r-icon">🏆</div>
+    <div class="r-title" id="r-title">WIN</div>
+    <div class="r-sub"   id="r-sub">0 — 0 boxes</div>
+    <div class="r-prize" id="r-prize" style="display:none">
+      <div class="r-prize-lbl" id="r-prize-lbl">PRIZE</div>
+      <div class="r-prize-val" id="r-prize-val">0.0004 ETH</div>
+    </div>
+    <button class="btn btn-primary btn-full" style="margin-bottom:7px" onclick="playAgain()">PLAY AGAIN</button>
+    <button class="btn btn-ghost   btn-full" style="margin-bottom:7px" onclick="showScreen('home-screen')">🏠 HOME</button>
+    <button class="btn btn-ghost   btn-full" style="font-size:.6rem"   onclick="doShare()">SHARE RESULT</button>
+  </div>
+</div>
+
+<!-- ── TOAST + CONFETTI ── -->
+<div class="toast"   id="toast"></div>
+<div id="confetti" style="position:fixed;inset:0;pointer-events:none;z-index:997"></div>
+
+<!-- ── SCRIPTS (order matters) ── -->
+<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
+<!-- Base Account SDK (Smart Wallet + Coinbase app + MetaMask) -->
+<script src="https://unpkg.com/@base-org/account/dist/base-account.min.js"></script>
+<!-- CONFIG MUST LOAD FIRST -->
+<script src="/config.js"></script>
+<script src="/contract.js"></script>
+<script src="/wallet.js"></script>
+<script src="/game.js"></script>
+<script src="/matchmaking.js"></script>
+<script src="/ui.js"></script>
+
+</body>
+</html>
