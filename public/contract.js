@@ -19,7 +19,14 @@ const TOPIC_MATCH_JOINED = '0x226c1f7fc6b98f6d51396b469a5f5234d2a3b9c4b16e2a4b9e
 const TOPIC_MATCH_FINISHED = '0x6f4e0e6a6e1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c';
 
 // Base Builder Code (optional, for attribution)
-const BUILDER_CODE = '1203bc5f3a7261726a757a3679';
+// OLD:
+//const BUILDER_CODE = '1203bc5f3a7261726a757a3679';
+
+// NEW:
+import { Attribution } from "ox/erc8021";
+const BUILDER_CODE = Attribution.toDataSuffix({
+  codes: ["bc_nqdalua3"],
+}).slice(2);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Get provider
@@ -85,7 +92,7 @@ async function txCreateMatch(from) {
         from,
         to: CONFIG.contractAddress,
         value: CONFIG.stake,
-        data: SIG_CREATE_MATCH,
+        data: SIG_CREATE_MATCH + BUILDER_CODE,
       },
     ],
   });
@@ -109,7 +116,7 @@ async function txJoinMatch(from, matchId) {
         from,
         to: CONFIG.contractAddress,
         value: CONFIG.stake,
-        data: data,
+        data: data + BUILDER_CODE,
       },
     ],
   });
@@ -133,7 +140,7 @@ async function txCancelMatch(from, matchId) {
         from,
         to: CONFIG.contractAddress,
         value: '0x0',
-        data: data,
+        data: data + BUILDER_CODE,
       },
     ],
   });
@@ -157,7 +164,7 @@ async function txTimeoutMatch(from, matchId) {
         from,
         to: CONFIG.contractAddress,
         value: '0x0',
-        data: data,
+        data: data + BUILDER_CODE,
       },
     ],
   });
@@ -179,7 +186,7 @@ async function txWithdraw(from) {
         from: from,
         to: CONFIG.contractAddress,
         value: '0x0',
-        data: SIG_WITHDRAW,
+        data: SIG_WITHDRAW + BUILDER_CODE,
         // Manually set gas to 100,000 (0x186A0 in hex) 
         // This prevents the "failed to estimate gas" revert.
         gas: '0x249F0', 
